@@ -73,19 +73,30 @@ exports.create_task = async (req, res) => {
 
 
 exports.delete_task = async (req, res, next) => {
-    
-    const {id}= req.body;
-    
+    const { id } = req.params;
+
     try {
-      
-        const deleteTaskQuery= await client.query('DELETE FROM tasks WHERE task_id = $1',[id])
-    
+        const deleteTaskQuery = await client.query('DELETE FROM tasks WHERE task_id = $1 RETURNING *', [id]);
+
+        if (deleteTaskQuery.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Task not found"
+            });
+        } else {
+            return res.status(200).json({
+                success: true,
+                message: "Task Deleted Successfully",
+                task: deleteTaskQuery.rows[0]  // Now we return the deleted task's information (optional)
+            });
+        }
+
     } catch (error) {
-        console.log("Error in Deleting Task",error)
-        res.status(500).json({
+        console.log("Error in Deleting Task", error);
+        return res.status(500).json({
             success: false,
             message: "Task deletion failed",
             error: error.message,
         });
     }
-}
+};
