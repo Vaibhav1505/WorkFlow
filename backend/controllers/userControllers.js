@@ -2,10 +2,10 @@ const bcrypt = require('bcrypt')
 const { client } = require('../database/databaseConnection')
 
 exports.user_signup = async function (req, res, next) {
+
     const { firstName, lastName, phone, email, password } = req.body;
     try {
-
-        const existingUserQuery =await client.query('SELECT * FROM users where email= $1 or phone= $2', [email, phone])
+const existingUserQuery =await client.query('SELECT * FROM users where email= $1 or phone= $2', [email, phone])
 
         if (existingUserQuery.rows.length>0) {
             res.status(409).json({

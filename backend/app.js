@@ -10,6 +10,7 @@ const databaseConfigs = require('./database/databaseConnection');
 
 const usersRouter = require('./routes/users');
 const taskRouter = require('./routes/tasks')
+const meetingRouter= require('./routes/meetings')
 
 var app = express();
 app.use(cors());
@@ -30,6 +31,7 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
 // Define routes
 app.use('/users', usersRouter);
 app.use('/tasks', taskRouter);
+app.use('/meetings',meetingRouter)
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 app.use(express.static(path.join(__dirname, '../frontend/build')));
