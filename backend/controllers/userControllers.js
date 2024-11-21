@@ -1,13 +1,40 @@
 const bcrypt = require('bcrypt')
 const { client } = require('../database/databaseConnection')
 
+exports.fetch_users = async function (req, res, next) {
+
+    try {
+        const fetchUserQuery = await client.query("SELECT * FROM users")
+
+        res.status(200).json({
+            success: "true",
+            message: fetchUserQuery.length == 0 ? "There is no User to Fetch" : "Fetch user Successful",
+            NumberOfUser:fetchUserQuery.length,
+            User: fetchUserQuery.rows.map((user) => ({
+                firstName: user.firstname,
+                lastName: user.lastname,
+                email: user.email,
+                phone: user.phone
+            }))
+        })
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: "false",
+            error: error.message
+        })
+    }
+
+}
+
 exports.user_signup = async function (req, res, next) {
 
     const { firstName, lastName, phone, email, password } = req.body;
     try {
-const existingUserQuery =await client.query('SELECT * FROM users where email= $1 or phone= $2', [email, phone])
+        const existingUserQuery = await client.query('SELECT * FROM users where email= $1 or phone= $2', [email, phone])
 
-        if (existingUserQuery.rows.length>0) {
+        if (existingUserQuery.rows.length > 0) {
             res.status(409).json({
                 success: "false",
                 message: "User already exist with email or Phone Number"
@@ -61,8 +88,8 @@ exports.user_signin = async function (req, res, next) {
             });
         }
 
-        const user = existingUserQuery.rows[0]; 
-        
+        const user = existingUserQuery.rows[0];
+
         // Compare the provided password with the stored hashed password
         const passwordMatched = await bcrypt.compare(password, user.password);
 
@@ -73,7 +100,7 @@ exports.user_signin = async function (req, res, next) {
             });
         }
 
-       
+
         res.status(200).json({
             success: "true",
             message: "Login successful",

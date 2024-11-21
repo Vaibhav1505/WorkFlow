@@ -6,7 +6,6 @@ exports.fetch_tasks = async (req, res, next) => {
     try {
         const fetchTasksQuery = await client.query('SELECT * FROM tasks');
 
-
         res.status(200).json({
             success: true,
             message: fetchTasksQuery.rows.length === 0 ? "No tasks found" : "Tasks retrieved successfully",
@@ -14,10 +13,10 @@ exports.fetch_tasks = async (req, res, next) => {
                 task_id: task.task_id,
                 task_title: task.task_title,
                 task_description: task.task_description,
-                startDate: task.startDate ?? 'No Start Date',
-                lastdate: task.lastDate ?? "Mo last Date",
+                startDate: task.startdate ? new Date(task.startdate).toISOString() : null, // Ensure valid date
+                lastDate: task.lastdate ? new Date(task.lastdate).toISOString() : null,
                 status: task.status,
-                participants: task.assigned_to
+                participants: task.assigned_to ? task.assigned_to.replace(/^{|}$/g, '').split(',') : []
             }))
         });
     } catch (error) {
@@ -73,8 +72,46 @@ exports.create_task = async (req, res) => {
     }
 };
 
+exports.update_status = async (req, res, next) => {
+    const { taskId } = req.params;
 
+    // Check if taskId is provided
+    if (!taskId) {
+        return res.status(400).json({
+            success: "false",
+            message: "TaskID is Required"
+        });
+    }
 
+    try {
+  
+        const statusUpdateQuery = await client.query(
+            'UPDATE tasks SET status = $1 WHERE task_id = $2 RETURNING *', 
+            ['Complete', taskId]
+        );
+
+        // Check if any rows were updated
+        if (statusUpdateQuery.rowCount === 0) {
+            return res.status(404).json({
+                success: "false",
+                message: "Task not found or already updated"
+            });
+        }
+
+        res.status(200).json({
+            success: "true",
+            message: "Status updated to 'Complete'",
+            task: statusUpdateQuery.rows[0] // Return the updated task
+        });
+    } catch (error) {
+        console.error('Unable to change Task Status:', error);
+        res.status(500).json({
+            success: "false",
+            message: "Unable to change task status",
+            error: error.message
+        });
+    }
+};
 
 exports.delete_task = async (req, res, next) => {
     const { taskId } = req.params;
